@@ -1,43 +1,65 @@
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" crossorigin="anonymous"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js" crossorigin="anonymous"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js" crossorigin="anonymous"></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>seeum</title>
+    <base href="/seeum/" />
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" crossorigin="anonymous"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js" crossorigin="anonymous"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js" crossorigin="anonymous"></script>
 
-<script>
-    // 질문자님의 실제 설정값
-    const firebaseConfig = {
-        apiKey: "AIzaSyB1IMP3Q9oW3dNwRcwDHKJ7dbA5Vep9YyA",
-        authDomain: "seeum-35ae6.firebaseapp.com",
-        projectId: "seeum-35ae6",
-        storageBucket: "seeum-35ae6.firebasestorage.app",
-        messagingSenderId: "266087616815",
-        appId: "1:266087616815:web:44e8b598fc4d172a8d11da"
-    };
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link href="BlazorApp1.styles.css" rel="stylesheet" />
+</head>
+<body>
+    <div id="app">
+        <div style="text-align:center; margin-top: 20%;">
+            <h3>seeum 앱 로딩 중...</h3>
+            <p>잠시만 기다려 주세요.</p>
+        </div>
+    </div>
 
-    // 로드 확인용 로그 추가
-    if (typeof firebase !== 'undefined') {
-        firebase.initializeApp(firebaseConfig);
-        console.log("🔥 Firebase 로드 성공!");
-    } else {
-        console.error("❌ Firebase 로드 실패 (ORB 차단 가능성)");
-    }
+    <script>
+        // Firebase 설정값
+        const firebaseConfig = {
+            apiKey: "AIzaSyB1IMP3Q9oW3dNwRcwDHKJ7dbA5Vep9YyA",
+            authDomain: "seeum-35ae6.firebaseapp.com",
+            projectId: "seeum-35ae6",
+            storageBucket: "seeum-35ae6.firebasestorage.app",
+            messagingSenderId: "266087616815",
+            appId: "1:266087616815:web:44e8b598fc4d172a8d11da"
+        };
 
-    window.signInWithGoogle = async () => {
-        const provider = new firebase.auth.GoogleAuthProvider();
+        // 초기화 및 로그인 함수 정의
         try {
-            const result = await firebase.auth().signInWithPopup(provider);
-            return { uid: result.user.uid, email: result.user.email, displayName: result.user.displayName };
-        } catch (error) {
-            console.error(error);
-            return null;
+            firebase.initializeApp(firebaseConfig);
+            window.signInWithGoogle = async () => {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                try {
+                    const result = await firebase.auth().signInWithPopup(provider);
+                    return { uid: result.user.uid, email: result.user.email, displayName: result.user.displayName };
+                } catch (error) {
+                    console.error("로그인 에러:", error);
+                    return null;
+                }
+            };
+        } catch (e) {
+            console.error("Firebase 세팅 에러:", e);
         }
-    };
-</script>
+    </script>
 
-<script autostart="false" src="_framework/blazor.webassembly.js"></script>
-<script>
-    Blazor.start({
-        loadBootResource: function (type, name, defaultUri, integrity) {
-            return defaultUri;
+    <script autostart="false" src="_framework/blazor.webassembly.js"></script>
+    <script>
+        if (window.Blazor) {
+            Blazor.start({
+                loadBootResource: function (type, name, defaultUri, integrity) {
+                    // 깃허브 배포 시 integrity 에러를 피하기 위해 uri만 반환
+                    return defaultUri;
+                }
+            });
         }
-    });
-</script>
+    </script>
+</body>
+</html>
