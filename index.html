@@ -70,5 +70,28 @@
             });
         }
     </script>
+    <script>
+        // 학습 기록 저장 (날짜별 통계 및 오답 포함)
+        window.saveStudyHistory = async (uid, historyData) => {
+            try {
+                const dateStr = new Date().toISOString().split('T')[0];
+                await db.collection("users").doc(uid).collection("history").doc(dateStr).set({
+                    ...historyData,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+                return true;
+            } catch (e) { return false; }
+        };
+
+        // 학습 기록 불러오기
+        window.loadAllHistory = async (uid) => {
+            try {
+                const snapshot = await db.collection("users").doc(uid).collection("history").orderBy("updatedAt", "desc").get();
+                const history = [];
+                snapshot.forEach(doc => history.Add({ id: doc.id, ...doc.data() }));
+                return JSON.stringify(history);
+            } catch (e) { return null; }
+        };
+    </script>
 </body>
 </html>
