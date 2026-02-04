@@ -1,201 +1,74 @@
-@page "/"
-@using System.IO
-@using ExcelDataReader
-@using System.Data
-@using System.Text.Json
-@inject IJSRuntime JSRuntime
-
-<style>
-    .app-container {
-        background-color: #F2F2F7;
-        min-height: 100vh;
-        font-family: -apple-system, sans-serif;
-        padding-bottom: 30px;
-    }
-
-    .top-nav {
-        background: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(20px);
-        padding: 15px;
-        border-bottom: 0.5px solid #C6C6C8;
-        position: sticky;
-        top: 0;
-        z-index: 100;
-    }
-
-    .card-item {
-        background: white;
-        border-radius: 14px;
-        padding: 18px;
-        margin-bottom: 12px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.04);
-        cursor: pointer;
-    }
-
-    .test-btn {
-        background-color: #007AFF;
-        color: white;
-        border-radius: 12px;
-        border: none;
-        padding: 12px;
-        font-weight: 600;
-        width: 100%;
-    }
-
-    .input-field {
-        width: 100%;
-        border-radius: 12px;
-        border: 1px solid #D1D1D6;
-        padding: 14px;
-        margin: 8px 0;
-    }
-
-    .study-card {
-        background: white;
-        border-radius: 18px;
-        padding: 24px;
-        margin-bottom: 15px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.06);
-    }
-
-    .answer-box {
-        background-color: #F2F2F7;
-        border-radius: 12px;
-        padding: 16px;
-        margin-top: 12px;
-        border: 0.5px solid #D1D1D6;
-    }
-
-    .score-text {
-        font-size: 2.5rem;
-        font-weight: 800;
-        color: #007AFF;
-    }
-
-    .delete-btn {
-        color: #FF3B30;
-        background: none;
-        border: none;
-        font-size: 0.8rem;
-    }
-</style>
-
-<div class="app-container">
-    <div class="top-nav">
-        <div class="d-flex justify-content-between align-items-center">
-            <h5 class="m-0 fw-bold">
-                @if (isTestMode) { <span>📖 테스트 중</span> }
-                else if (isResultMode) { <span>📊 결과</span> }
-                else if (currentView == "Exams") { <span>📚 내 목록</span> }
-                else { <span>📂 @(selectedExam?.Name ?? "목록")</span> }
-            </h5>
-            @if (!isTestMode && !isResultMode) {
-            <button class="btn btn-primary btn-sm rounded-circle" @onclick="HandleAddButton" style="width:32px;height:32px;">+</button>
-            }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>seeum</title>
+    <base href="/seeum/" />
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" crossorigin="anonymous"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js" crossorigin="anonymous"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link href="BlazorApp1.styles.css" rel="stylesheet" />
+</head>
+<body>
+    <div id="app">
+        <div style="text-align:center; margin-top: 20%;">
+            <h3>seeum 앱 로딩 중...</h3>
         </div>
     </div>
 
-    <div class="container mt-3">
-        <div class="card-item mb-4 text-center">
-            @if (user == null) {
-            <button class="test-btn" style="background-color: #4285F4;" @onclick="Login">구글 로그인 연동</button>
-            } else {
-            <div class="d-flex justify-content-between align-items-center">
-                <span class="text-primary fw-bold">✓ @user.DisplayName</span>
-                <button class="btn btn-sm btn-outline-secondary" @onclick="LoadFromCloud">동기화</button>
-            </div>
-            }
-        </div>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyB1IMP3Q9oW3dNwRcwDHKJ7dbA5Vep9YyA",
+            authDomain: "seeum-35ae6.firebaseapp.com",
+            projectId: "seeum-35ae6",
+            storageBucket: "seeum-35ae6.firebasestorage.app",
+            messagingSenderId: "266087616815",
+            appId: "1:266087616815:web:44e8b598fc4d172a8d11da"
+        };
 
-        @if (isTestMode) {
-        <div class="study-card">
-            <div class="small text-muted mb-2">@(currentTestIndex + 1) / @testQuestions.Count</div>
-            <h4 class="fw-bold mb-4">@testQuestions[currentTestIndex].Question</h4>
-            <input type="text" class="input-field" @bind="testQuestions[currentTestIndex].UserAnswer" @onkeyup="HandleKeyUp" />
-            <button class="test-btn mt-3" @onclick="NextQuestion">@(currentTestIndex < testQuestions.Count - 1 ? "다음" : "제출")</button>
-        </div>
-        } else if (isResultMode) {
-        <div class="study-card text-center">
-            <div class="score-text">@finalScore 점</div>
-            <button class="test-btn mt-3 bg-secondary" @onclick="() => isResultMode = false">돌아가기</button>
-        </div>
-        } else if (currentView == "Exams") {
-        @foreach (var exam in Exams) {
-        <div class="card-item" @onclick="() => { selectedExam = exam; currentView = " Chapters"; }">
-            <div class="d-flex justify-content-between">
-                <span class="fw-bold">@exam.Name</span>
-                <button class="delete-btn" @onclick:stopPropagation="true" @onclick="() => { Exams.Remove(exam); SaveData(); }">삭제</button>
-            </div>
-            <button class="test-btn mt-2" @onclick:stopPropagation="true" @onclick="() => StartTest(exam)">테스트</button>
-        </div>
+        try {
+            firebase.initializeApp(firebaseConfig);
+            const db = firebase.firestore();
+
+            window.signInWithGoogle = async () => {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                try {
+                    const result = await firebase.auth().signInWithPopup(provider);
+                    return { uid: result.user.uid, email: result.user.email, displayName: result.user.displayName };
+                } catch (error) { return null; }
+            };
+
+            window.saveDataToFirestore = async (uid, jsonData) => {
+                try {
+                    await db.collection("users").doc(uid).set({
+                        studyData: jsonData,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true });
+                    return true;
+                } catch (e) { return false; }
+            };
+
+            window.loadDataFromFirestore = async (uid) => {
+                try {
+                    const doc = await db.collection("users").doc(uid).get();
+                    return doc.exists ? doc.data().studyData : null;
+                } catch (e) { return null; }
+            };
+        } catch (e) { console.error(e); }
+    </script>
+
+    <script autostart="false" src="_framework/blazor.webassembly.js"></script>
+    <script>
+        if (window.Blazor) {
+            Blazor.start({
+                loadBootResource: function (type, name, defaultUri, integrity) {
+                    return defaultUri;
+                }
+            });
         }
-        }
-    </div>
-</div>
-
-@code {
-    private List<ExamModel>
-    Exams = new();
-    private string currentView = "Exams";
-    private ExamModel selectedExam;
-    private UserInfo user;
-    private bool isTestMode, isResultMode;
-    private List<QuestionModel>
-        testQuestions = new();
-        private int currentTestIndex = 0;
-        private double finalScore;
-
-        protected override async Task OnAfterRenderAsync(bool firstRender) {
-        if (firstRender) {
-        var json = await JSRuntime.InvokeAsync<string>
-            ("localStorage.getItem", "StudyData");
-            if (!string.IsNullOrEmpty(json)) { Exams = JsonSerializer.Deserialize<List<ExamModel>>(json) ?? new(); StateHasChanged(); }
-        }
-    }
-
-    private async Task Login() {
-        user = await JSRuntime.InvokeAsync<UserInfo>("signInWithGoogle");
-        if (user != null) await LoadFromCloud();
-        StateHasChanged();
-    }
-
-    private async Task LoadFromCloud() {
-        if (user == null) return;
-        var json = await JSRuntime.InvokeAsync<string>("loadDataFromFirestore", user.Uid);
-        if (!string.IsNullOrEmpty(json)) { Exams = JsonSerializer.Deserialize<List<ExamModel>>(json); StateHasChanged(); }
-    }
-
-    private async Task SaveData() {
-        var json = JsonSerializer.Serialize(Exams);
-        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "StudyData", json);
-        if (user != null) await JSRuntime.InvokeAsync<bool>("saveDataToFirestore", user.Uid, json);
-    }
-
-    private void StartTest(ExamModel e) {
-        testQuestions.Clear();
-        foreach (var ch in e.Chapters) testQuestions.AddRange(ch.Questions);
-        if (!testQuestions.Any()) return;
-        currentTestIndex = 0; isTestMode = true;
-    }
-
-    private void NextQuestion() {
-        if (currentTestIndex < testQuestions.Count - 1) currentTestIndex++;
-        else {
-            int correct = testQuestions.Count(q => q.Answer.Trim().Equals(q.UserAnswer?.Trim(), StringComparison.OrdinalIgnoreCase));
-            finalScore = Math.Round(((double)correct / testQuestions.Count) * 100, 1);
-            isTestMode = false; isResultMode = true;
-        }
-    }
-
-    private void HandleKeyUp(KeyboardEventArgs e) { if (e.Key == "Enter") NextQuestion(); }
-
-    private async Task HandleAddButton() {
-        var name = await JSRuntime.InvokeAsync<string>("prompt", "이름:");
-        if (!string.IsNullOrWhiteSpace(name)) { Exams.Add(new ExamModel { Name = name }); await SaveData(); }
-    }
-
-    public class UserInfo { public string Uid { get; set; } public string DisplayName { get; set; } }
-    public class ExamModel { public string Name { get; set; } public List<ChapterModel> Chapters { get; set; } = new(); }
-    public class ChapterModel { public string Name { get; set; } public List<QuestionModel> Questions { get; set; } = new(); }
-    public class QuestionModel { public string Question { get; set; } public string Answer { get; set; } public string UserAnswer { get; set; } public string Memo { get; set; } }
-}
+    </script>
+</body>
+</html>
