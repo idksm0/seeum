@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -14,7 +13,6 @@
     <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
     <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
 </head>
-
 <body>
     <div id="app">
         <svg class="loading-progress">
@@ -29,68 +27,44 @@
         <a href="" class="reload">Reload</a>
         <a class="dismiss">🗙</a>
     </div>
+
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-global.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-global.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-global.js"></script>
 
     <script>
-        const firebaseConfig = { ... };
-        firebase.initializeApp(firebaseConfig);
+        const firebaseConfig = {
+            apiKey: "AIzaSyB1IMP3Q9oW3dNwRcwDHKJ7dbA5Vep9YyA",
+            authDomain: "seeum-35ae6.firebaseapp.com",
+            projectId: "seeum-35ae6",
+            storageBucket: "seeum-35ae6.firebasestorage.app",
+            messagingSenderId: "266087616815",
+            appId: "1:266087616815:web:44e8b598fc4d172a8d11da"
+        };
 
-        // 이 부분이 window.signInWithGoogle 로 정확히 시작하는지 보세요.
+        // 초기화
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // C#에서 호출할 로그인 함수 정의
         window.signInWithGoogle = async () => {
             const provider = new firebase.auth.GoogleAuthProvider();
             try {
-                const result = await firebase.auth().signInWithPopup(provider);
+                const result = await auth.signInWithPopup(provider);
                 return {
                     uid: result.user.uid,
                     email: result.user.email,
                     displayName: result.user.displayName
                 };
             } catch (error) {
-                console.error(error);
+                console.error("Login Fail:", error);
                 return null;
             }
         };
     </script>
+
     <script src="_framework/blazor.webassembly.js"></script>
     <script>navigator.serviceWorker.register('service-worker.js');</script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-global.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-global.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-global.js"></script>
-
-<script>
-    // 질문자님이 주신 설정값
-    const firebaseConfig = {
-        apiKey: "AIzaSyB1IMP3Q9oW3dNwRcwDHKJ7dbA5Vep9YyA",
-        authDomain: "seeum-35ae6.firebaseapp.com",
-        projectId: "seeum-35ae6",
-        storageBucket: "seeum-35ae6.firebasestorage.app",
-        messagingSenderId: "266087616815",
-        appId: "1:266087616815:web:44e8b598fc4d172a8d11da"
-    };
-
-    // Firebase 초기화
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-
-    // 구글 로그인 함수
-    window.signInWithGoogle = async () => {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        try {
-            const result = await auth.signInWithPopup(provider);
-            return {
-                uid: result.user.uid,
-                email: result.user.email,
-                displayName: result.user.displayName
-            };
-        } catch (error) {
-            console.error(error);
-            return null;
-        }
-    };
-</script>
 </body>
-
 </html>
